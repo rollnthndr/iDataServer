@@ -9,8 +9,9 @@ import serial
 ser = serial.Serial('com3', 9600, timeout=0)
 
 class Flag:
-    bitvalue = 0xff
+    bitvalue = 0x00
     color = ''
+    changed = True
 
 # this is our State class, with some helpful variables
 class State:
@@ -52,12 +53,12 @@ def loop():
 
     sessionflags = ir['PitSvFlags']
     print('Comparison result :', Flag.bitvalue & sessionflags)
-    hex_str = Flag.bitvalue
-    # hex_int = int(hex_str, 16)
+    Flag.changed = not(Flag.bitvalue & sessionflags)
 
-    if not(Flag.bitvalue & sessionflags):
+
+    if Flag.changed:
         print('Session Flags:', sessionflags)
-        print('Flag BitValue:', Flag.bitvalue)
+        print('Flag BitValue:', irsdk.PitSvFlags.lf_tire_change)
         print('sdk test: ', sessionflags & irsdk.PitSvFlags.lf_tire_change)
         if sessionflags & irsdk.PitSvFlags.fuel_fill:
             print("Changing to Green")
@@ -70,7 +71,7 @@ def loop():
             Flag.color = 'Yellow'
             ser.write(Flag.color.encode())
 
-
+        # Flag.bitvalue = 0x00
 
 
 
