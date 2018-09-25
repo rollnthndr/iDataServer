@@ -4,6 +4,13 @@
 
 import irsdk
 import time
+import serial
+
+ser = serial.Serial('com3', 9600, timeout=0)
+
+class Flag:
+    bitvalue = 0xff
+    color = ''
 
 # this is our State class, with some helpful variables
 class State:
@@ -43,6 +50,31 @@ def loop():
     t = ir['SessionTime']
     print('session time:', t)
 
+    sessionflags = ir['PitSvFlags']
+    print('Comparison result :', Flag.bitvalue & sessionflags)
+    hex_str = Flag.bitvalue
+    # hex_int = int(hex_str, 16)
+
+    if not(Flag.bitvalue & sessionflags):
+        print('Session Flags:', sessionflags)
+        print('Flag BitValue:', Flag.bitvalue)
+        print('sdk test: ', sessionflags & irsdk.PitSvFlags.lf_tire_change)
+        if sessionflags & irsdk.PitSvFlags.fuel_fill:
+            print("Changing to Green")
+            Flag.bitvalue = irsdk.PitSvFlags.fuel_fill
+            Flag.color = 'Green'
+            ser.write(Flag.color.encode())
+        elif sessionflags & irsdk.PitSvFlags.lf_tire_change:
+            print("Changing to Yellow")
+            Flag.bitvalue = irsdk.PitSvFlags.lf_tire_change
+            Flag.color = 'Yellow'
+            ser.write(Flag.color.encode())
+
+
+
+
+
+
     # retrieve CarSetup from session data
     # we also check if CarSetup data has been updated
     # with ir.get_session_info_update_by_key
@@ -78,6 +110,7 @@ if __name__ == '__main__':
     # initializing ir and state
     ir = irsdk.IRSDK()
     state = State()
+    flag = Flag()
 
     try:
         # infinite loop
